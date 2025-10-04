@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = 'https://api.techsterker.com/api';
 
 const CreateLiveClass = () => {
   const [enrollments, setEnrollments] = useState([]);
@@ -18,6 +19,7 @@ const CreateLiveClass = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+   const navigate = useNavigate(); // initialize navigate
 
   // 🔁 Fetch Enrollments
   useEffect(() => {
@@ -57,7 +59,6 @@ const CreateLiveClass = () => {
     fetchMentors();
   }, []);
 
-  // 🔘 Create Live Class
   const handleCreateLiveClass = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -84,7 +85,8 @@ const CreateLiveClass = () => {
       const response = await axios.post(`${API_BASE}/createliveclass`, liveClassData);
       if (response.data.success) {
         setSuccessMessage('Live class created successfully');
-        // Reset form (optional)
+
+        // Reset form
         setClassName('');
         setSubjectName('');
         setDate('');
@@ -92,6 +94,9 @@ const CreateLiveClass = () => {
         setLink('');
         setSelectedEnrollment('');
         setMentorId('');
+
+        // ✅ Navigate to /liveclasses
+        navigate('/liveclasses');
       } else {
         setError(response.data.message || 'Something went wrong');
       }

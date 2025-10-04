@@ -23,7 +23,7 @@ const Navbar = ({ setIsCollapsed, isCollapsed }) => {
       </button>
 
       {/* Notifications */}
-      <button
+      {/* <button
         onClick={handleNotificationsClick}
         className="relative flex items-center gap-1 ml-4 px-3 py-2 rounded hover:bg-blue-700 cursor-pointer select-none"
         title="Notifications"
@@ -35,7 +35,7 @@ const Navbar = ({ setIsCollapsed, isCollapsed }) => {
           </span>
         )}
         {!isCollapsed && <span className="text-sm font-medium">Notifications</span>}
-      </button>
+      </button> */}
 
       {/* Spacer to push logo to right */}
       <div className="flex-grow"></div>
@@ -43,11 +43,10 @@ const Navbar = ({ setIsCollapsed, isCollapsed }) => {
       {/* Logo + Redemly title on the right side */}
       <div className="flex items-center gap-2 pr-4">
         <img
-          src="/discount logo.png"
+          src="/logo.png"
           alt="Vendor Logo"
           className="w-[40px] h-auto" // No border or circle
         />
-        <span className="text-white-400 font-bold text-lg">Redemly</span>
       </div>
     </nav>
   );

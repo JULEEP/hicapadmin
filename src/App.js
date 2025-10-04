@@ -107,6 +107,14 @@ import AddInterview from "./Pages/AddInterview.js";
 import AllInterviews from "./Pages/AllInterviews.js";
 import PaymentsList from "./Pages/PaymentsList.js";
 import CreateUserByAdmin from "./Pages/CreateUserByAdmin.js";
+import GenerateInitialInvoice from "./Pages/GenerateInitialInvoice.js";
+import InvoicesList from "./Pages/InvoicesList.js";
+import CourseModulesList from "./Pages/CourseModuleList.js"
+import CourseModuleForm from "./Pages/CourseModuleForm.js"
+import AddMentorToEnrollment from "./Pages/AddMentorToEnrollment.js";
+import MentorsWithBatches from "./Pages/MentorsWithBatches.js";
+import FormsManagement from "./Pages/FormManagement.js";
+import AttendanceList from "./Pages/AttendanceList.js";
 
 
 
@@ -227,6 +235,15 @@ function App() {
               <Route path="/interviewlist" element={<AllInterviews />} />
               <Route path="/paymentlist" element={<PaymentsList />} />
               <Route path="/createuser" element={<CreateUserByAdmin />} />
+              <Route path="/generateinvoice" element={<GenerateInitialInvoice />} />
+              <Route path="/invoicelist" element={<InvoicesList />} />
+              <Route path="/course-modules" element={<CourseModulesList />} />
+              <Route path="/course-modules/create" element={<CourseModuleForm />} />
+              <Route path="/course-modules/edit/:id" element={<CourseModuleForm />} />
+              <Route path="/addmentortoenrollered" element={<AddMentorToEnrollment />} />
+              <Route path="/mentorswithbatches" element={<MentorsWithBatches />} />
+              <Route path="/usercontactformlist" element={<FormsManagement />} />
+              <Route path="/attendancelist" element={<AttendanceList />} />
 
 
 

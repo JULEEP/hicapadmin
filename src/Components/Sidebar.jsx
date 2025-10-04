@@ -2,27 +2,35 @@ import React, { useState } from "react";
 import { FaChevronDown } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = ({ isCollapsed, isMobile }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
+
+  const navigate = useNavigate();
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
   };
 
-  const handleLogout = async () => {
-    try {
-      await axios.post(
-        "https://credenhealth.onrender.com/api/admin/logout",
-        {},
-        { withCredentials: true }
-      );
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to logout?");
+
+    if (confirmLogout) {
+      // Clear all authentication related data
       localStorage.removeItem("authToken");
-      alert("Logout successful");
-      window.location.href = "/";
-    } catch (error) {
-      console.error("Logout error:", error);
-      alert("Logout failed. Please try again.");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("adminToken");
+      sessionStorage.removeItem("authToken");
+
+      // Clear any axios default headers if set
+      delete axios.defaults.headers.common['Authorization'];
+
+      // Navigate to home page
+      navigate("/", { replace: true });
+
+      // Optional: Force reload to reset application state
+      window.location.reload();
     }
   };
 
@@ -42,10 +50,25 @@ const Sidebar = ({ isCollapsed, isMobile }) => {
     },
     {
       icon: <i className="ri-book-open-fill text-white"></i>,
+      name: "Attendance", // Section name
+      dropdown: [
+        { name: "All Attendance", path: "/attendancelist" }, // This path will lead to the attendance list page
+      ],
+    },
+    {
+      icon: <i className="ri-book-open-fill text-white"></i>,
       name: "Courses",
       dropdown: [
         { name: "Create Course", path: "/create-course" },
         { name: "Get All Courses", path: "/courselist" },
+      ],
+    },
+    {
+      icon: <i className="ri-book-open-fill text-white"></i>,
+      name: "Course Module",
+      dropdown: [
+        { name: "Create Course Module", path: "/course-modules/create" },
+        { name: "All Courses Modules", path: "/course-modules" },
       ],
     },
     {
@@ -62,6 +85,23 @@ const Sidebar = ({ isCollapsed, isMobile }) => {
       dropdown: [
         { name: "Register Mentor", path: "/creatementor" },
         { name: "All Mentors", path: "/mentorlist" },
+        { name: "Add Enroll to Mentor", path: "/addmentortoenrollered" },
+        { name: "Mentors with batches", path: "/mentorswithbatches" },
+      ],
+    },
+    {
+      icon: <i className="ri-file-text-fill text-white"></i>, // Using a file/invoice icon
+      name: "Invoices",
+      dropdown: [
+        { name: "Generate Invoice", path: "/generateinvoice" },
+        { name: "All Invoices", path: "/invoicelist" },
+      ],
+    },
+    {
+      icon: <i className="ri-phone-fill text-white"></i>, // Using a phone icon
+      name: "Contacts",
+      dropdown: [
+        { name: "User ContactsList", path: "/usercontactformlist" },
       ],
     },
     {
@@ -81,27 +121,10 @@ const Sidebar = ({ isCollapsed, isMobile }) => {
       ],
     },
     {
-      icon: <i className="ri-file-fill text-white"></i>,
-      name: "Invoices",
-      dropdown: [
-        { name: "Create Invoice", path: "/create-invoice" },
-        { name: "Get All Invoices", path: "/invoices" },
-      ],
-    },
-    {
-      icon: <i className="ri-shopping-cart-fill text-white"></i>,
-      name: "Orders",
-      dropdown: [
-        { name: "Get All Orders", path: "/orders" },
-        { name: "Create Order", path: "/create-order" },
-      ],
-    },
-    {
       icon: <i className="ri-money-dollar-box-fill text-white"></i>,
       name: "Payments",
       dropdown: [
         { name: "Get All Payments", path: "/paymentlist" },
-        { name: "Create Payment", path: "/create-payment" },
       ],
     },
     {
@@ -157,16 +180,15 @@ const Sidebar = ({ isCollapsed, isMobile }) => {
                 )}
               </>
             ) : (
-              <Link
-                to={item.path}
+              <div
                 className="flex items-center py-3 px-4 font-semibold text-sm text-white mx-4 rounded-lg hover:bg-gray-700 hover:text-[#00B074] duration-300 cursor-pointer"
-                onClick={item.action ? item.action : null}
+                onClick={item.action || (() => navigate(item.path))}
               >
                 <span className="text-xl">{item.icon}</span>
                 <span className={`ml-4 ${isCollapsed && !isMobile ? "hidden" : "block"}`}>
                   {item.name}
                 </span>
-              </Link>
+              </div>
             )}
           </div>
         ))}

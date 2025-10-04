@@ -1,69 +1,73 @@
 import React, { useEffect, useState } from "react";
-import { FaEdit, FaTrashAlt, FaDownload } from "react-icons/fa";
+import { FaEdit, FaTrashAlt, FaDownload, FaEye } from "react-icons/fa";
 import { utils, writeFile } from "xlsx";
 
-export default function PaymentsList() {
-  const [payments, setPayments] = useState([]);
+export default function InvoicesList() {
+  const [invoices, setInvoices] = useState([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [paymentsPerPage] = useState(10);
+  const [invoicesPerPage] = useState(10);
   const [downloadLimit, setDownloadLimit] = useState(50);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [updatedStatus, setUpdatedStatus] = useState("");
 
   useEffect(() => {
-    fetchPayments();
+    fetchInvoices();
   }, []);
 
-  const fetchPayments = async () => {
+  const fetchInvoices = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("https://api.techsterker.com/api/userpayments");
+      const res = await fetch("https://api.techsterker.com/api/getallinvoices");
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      setPayments(data.data);
+      setInvoices(data.data);
       setError("");
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Filter payments by search query
-  const filtered = payments.filter((payment) =>
-    (payment.userName || "").toLowerCase().includes(search.toLowerCase())
+  // Filter invoices by search query
+  const filtered = invoices.filter((inv) =>
+    (inv.student?.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const indexOfLast = currentPage * paymentsPerPage;
-  const indexOfFirst = indexOfLast - paymentsPerPage;
-  const currentPayments = filtered.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(filtered.length / paymentsPerPage);
+  const indexOfLast = currentPage * invoicesPerPage;
+  const indexOfFirst = indexOfLast - invoicesPerPage;
+  const currentInvoices = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / invoicesPerPage);
 
   const exportData = (type) => {
-    const exportPayments = filtered.slice(0, downloadLimit).map((p) => ({
-      userId: p.userId,
-      userName: p.userName || "",
-      userEmail: p.userEmail || "",
-      courseName: p.courseName || "",
-      totalAmount: p.totalAmount,
-      advancePayment: p.advancePayment,
-      remainingAmount: p.remainingAmount,
-      paymentStatus: p.paymentStatus || "",
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-    }));
-    const ws = utils.json_to_sheet(exportPayments);
+    const exportInvoices = filtered
+      .slice(0, downloadLimit)
+      .map((inv) => ({
+        invoiceNumber: inv.invoiceNumber,
+        studentName: inv.student?.name || "",
+        studentEmail: inv.student?.email || "",
+        studentMobile: inv.student?.mobile || "",
+        course: inv.student?.course || "",
+        totalAmount: inv.totalAmount,
+        paymentStatus: inv.status,
+        issueDate: inv.issueDate,
+        dueDate: inv.dueDate,
+      }));
+    const ws = utils.json_to_sheet(exportInvoices);
     const wb = utils.book_new();
-    utils.book_append_sheet(wb, ws, "Payments");
-    writeFile(wb, `payments_export.${type}`);
+    utils.book_append_sheet(wb, ws, "Invoices");
+    writeFile(wb, `invoices_export.${type}`);
   };
 
-  const openEditModal = (payment) => {
-    setSelectedPayment(payment);
-    setUpdatedStatus(payment.paymentStatus);
+  const openEditModal = (invoice) => {
+    setSelectedInvoice(invoice);
+    setUpdatedStatus(invoice.status);
     setIsEditModalOpen(true);
   };
 
@@ -73,43 +77,38 @@ export default function PaymentsList() {
       return;
     }
 
-    // Update the payment status
     try {
       const res = await fetch(
-        `https://api.techsterker.com/api/userpayments/${selectedPayment.userId}`,
+        `https://api.techsterker.com/api/updateinvoice/${selectedInvoice._id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ paymentStatus: updatedStatus }),
+          body: JSON.stringify({ status: updatedStatus }),
         }
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      // Close the modal and refresh the list
       setIsEditModalOpen(false);
-      fetchPayments();
+      fetchInvoices();
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const handleDelete = async (paymentId) => {
-    if (window.confirm("Are you sure you want to delete this payment?")) {
+  const handleDelete = async (invoiceId) => {
+    if (window.confirm("Are you sure you want to delete this invoice?")) {
       try {
         const res = await fetch(
-          `https://api.techsterker.com/api/userpayments/${paymentId}`,
-          {
-            method: "DELETE",
-          }
+          `https://api.techsterker.com/api/deleteinvoice/${invoiceId}`,
+          { method: "DELETE" }
         );
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
 
-        // Refresh the payment list
-        fetchPayments();
+        fetchInvoices();
       } catch (err) {
         setError(err.message);
       }
@@ -118,14 +117,15 @@ export default function PaymentsList() {
 
   return (
     <div className="p-6 bg-white shadow rounded-lg relative">
-      <h2 className="text-xl font-semibold mb-4">All Payments</h2>
+      <h2 className="text-xl font-semibold mb-4">All Invoices</h2>
       {error && <div className="text-red-500 mb-4">{error}</div>}
+      {loading && <div className="mb-4">Loading invoices...</div>}
 
       <div className="flex justify-between mb-4 gap-2">
         <div className="flex gap-2 w-full">
           <input
             className="w-3/4 p-2 border rounded-md"
-            placeholder="Search by user name..."
+            placeholder="Search by student name..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -159,39 +159,44 @@ export default function PaymentsList() {
         <thead>
           <tr className="bg-blue-600 text-white">
             <th className="p-2 border">Sl</th>
-            <th className="p-2 border">User Name</th>
+            <th className="p-2 border">Student Name</th>
             <th className="p-2 border">Email</th>
             <th className="p-2 border">Course</th>
             <th className="p-2 border">Total Amount</th>
-            <th className="p-2 border">Advance Payment</th>
-            <th className="p-2 border">Remaining Payment</th>
             <th className="p-2 border">Payment Status</th>
             <th className="p-2 border">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {currentPayments.map((payment, idx) => (
-            <tr key={payment.userId}>
+          {currentInvoices.map((inv, idx) => (
+            <tr key={inv._id}>
               <td className="p-2 border">{indexOfFirst + idx + 1}</td>
-              <td className="p-2 border">{payment.userName}</td>
-              <td className="p-2 border">{payment.userEmail}</td>
-              <td className="p-2 border">{payment.courseName}</td>
-              <td className="p-2 border">{payment.totalAmount}</td>
-              <td className="p-2 border">{payment.advancePayment}</td>
-              <td className="p-2 border">{payment.remainingAmount}</td>
-              <td className="p-2 border">{payment.paymentStatus}</td>
+              <td className="p-2 border">{inv.student?.name}</td>
+              <td className="p-2 border">{inv.student?.email}</td>
+              <td className="p-2 border">{inv.student?.course}</td>
+              <td className="p-2 border">{inv.totalAmount}</td>
+              <td className="p-2 border">{inv.status}</td>
               <td className="p-2 border flex gap-2">
+                <a
+                  href={inv.fullPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-500 text-white p-2 rounded-md hover:bg-green-400"
+                  title="View Invoice"
+                >
+                  <FaEye />
+                </a>
                 <button
                   className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-400"
                   title="Edit"
-                  onClick={() => openEditModal(payment)}
+                  onClick={() => openEditModal(inv)}
                 >
                   <FaEdit />
                 </button>
                 <button
                   className="bg-red-500 text-white p-2 rounded-md hover:bg-red-400"
                   title="Delete"
-                  onClick={() => handleDelete(payment.userId)}
+                  onClick={() => handleDelete(inv._id)}
                 >
                   <FaTrashAlt />
                 </button>
@@ -231,20 +236,21 @@ export default function PaymentsList() {
         </button>
       </div>
 
-      {/* Custom Edit Status Modal */}
+      {/* Edit Status Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-md shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Edit Payment Status</h3>
+            <h3 className="text-lg font-semibold mb-4">Edit Invoice Status</h3>
             <select
               value={updatedStatus}
               onChange={(e) => setUpdatedStatus(e.target.value)}
               className="p-2 border rounded-md w-full mb-4"
             >
               <option value="">Select Status</option>
-              <option value="Pending">Pending</option>
+              <option value="sent">Sent</option>
               <option value="Paid">Paid</option>
-              <option value="Failed">Failed</option>
+              <option value="Pending">Pending</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
             <div className="flex justify-end gap-2">
               <button

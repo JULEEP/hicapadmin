@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import {
   FiUsers,
-  FiTag,
-  FiShoppingBag,
+  FiBook,
+  FiUserCheck,
+  FiDollarSign,
   FiGrid,
   FiPlusCircle,
   FiActivity,
@@ -11,92 +12,180 @@ import {
   FiCalendar,
   FiClock,
   FiStar,
-  FiCoffee,
+  FiVideo,
+  FiAward,
 } from "react-icons/fi";
 import { AreaChart, Area, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [revenueFilter, setRevenueFilter] = useState("weekly");
-  const [redemptionFilter, setRedemptionFilter] = useState("weekly");
-  const [restaurantFilter, setRestaurantFilter] = useState("weekly");
-  const [topRestaurantsFilter, setTopRestaurantsFilter] = useState("weekly");
+  const [enrollmentFilter, setEnrollmentFilter] = useState("weekly");
+  const [courseFilter, setCourseFilter] = useState("weekly");
+  const [topCoursesFilter, setTopCoursesFilter] = useState("weekly");
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentRestPage, setCurrentRestPage] = useState(1);
+  const [currentMentorPage, setCurrentMentorPage] = useState(1);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
 
-  const usersPerPage = 5;
-  const restaurantsPerPage = 5;
+  const studentsPerPage = 5;
+  const mentorsPerPage = 5;
+
+  // API integration
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('https://api.techsterker.com/api/dashboard');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setDashboardData(result.data);
+      } else {
+        throw new Error('API returned unsuccessful response');
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await fetch("http://31.97.206.144:6098/api/admin/dashboard");
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data");
-        }
-        const data = await response.json();
-        setDashboardData(data.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDashboardData();
   }, []);
 
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // Mock chart data since your API doesn't provide detailed chart data
+  const getMockChartData = (filter) => {
+    const baseData = [
+      { name: 'Mon', revenue: 4000, enrolled: 24 },
+      { name: 'Tue', revenue: 3000, enrolled: 18 },
+      { name: 'Wed', revenue: 2000, enrolled: 12 },
+      { name: 'Thu', revenue: 2780, enrolled: 20 },
+      { name: 'Fri', revenue: 1890, enrolled: 15 },
+      { name: 'Sat', revenue: 2390, enrolled: 17 },
+      { name: 'Sun', revenue: 3490, enrolled: 22 },
+    ];
+
+    if (filter === 'today') {
+      return [{ name: 'Today', revenue: 1200, enrolled: 8 }];
+    } else if (filter === 'monthly') {
+      return [
+        { name: 'Week 1', revenue: 12000, enrolled: 80 },
+        { name: 'Week 2', revenue: 15000, enrolled: 95 },
+        { name: 'Week 3', revenue: 18000, enrolled: 110 },
+        { name: 'Week 4', revenue: 22000, enrolled: 130 },
+      ];
+    }
+    return baseData;
+  };
+
+  // Mock course data
+  const getMockCourseData = (filter) => {
+    return [
+      { name: 'JavaScript', enrolled: 45, revenue: 45000 },
+      { name: 'React', enrolled: 38, revenue: 38000 },
+      { name: 'Node.js', enrolled: 32, revenue: 32000 },
+      { name: 'Python', enrolled: 28, revenue: 28000 },
+      { name: 'Data Science', enrolled: 25, revenue: 25000 },
+      { name: 'Machine Learning', enrolled: 22, revenue: 22000 },
+    ];
+  };
+
+  // Loading state
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-xl">Loading dashboard data...</div>
+      </div>
+    );
   }
 
+  // Error state
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-500">Error: {error}</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-xl text-red-600 text-center">
+          {error}
+          <button 
+            onClick={fetchDashboardData}
+            className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
+  // No data state
   if (!dashboardData) {
-    return <div className="flex justify-center items-center h-screen">No data available</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-xl">No data available</div>
+      </div>
+    );
   }
 
-  // Pagination logic for users
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = dashboardData.tables.userInsightsData.slice(indexOfFirstUser, indexOfLastUser);
-  const totalPages = Math.ceil(dashboardData.tables.userInsightsData.length / usersPerPage);
+  // Pagination logic for students
+  const indexOfLastStudent = currentPage * studentsPerPage;
+  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
+  const currentStudents = dashboardData.tables?.studentInsightsData?.slice(indexOfFirstStudent, indexOfLastStudent) || [];
+  const totalPages = Math.ceil((dashboardData.tables?.studentInsightsData?.length || 0) / studentsPerPage);
 
-  // Pagination logic for restaurants
-  const indexOfLastRest = currentRestPage * restaurantsPerPage;
-  const indexOfFirstRest = indexOfLastRest - restaurantsPerPage;
-  const currentRestaurants = dashboardData.tables.restaurantInsightsData.slice(indexOfFirstRest, indexOfLastRest);
-  const totalRestPages = Math.ceil(dashboardData.tables.restaurantInsightsData.length / restaurantsPerPage);
+  // Pagination logic for mentors
+  const indexOfLastMentor = currentMentorPage * mentorsPerPage;
+  const indexOfFirstMentor = indexOfLastMentor - mentorsPerPage;
+  const currentMentors = dashboardData.tables?.mentorInsightsData?.slice(indexOfFirstMentor, indexOfLastMentor) || [];
+  const totalMentorPages = Math.ceil((dashboardData.tables?.mentorInsightsData?.length || 0) / mentorsPerPage);
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
       {/* Top Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={FiUsers} label="Total Users" value={dashboardData.totals.users} color="blue" />
-        <StatCard icon={FiTag} label="Total Coupons" value={dashboardData.totals.coupons} color="green" />
-        <StatCard icon={FiShoppingBag} label="Total Vendors" value={dashboardData.totals.vendors} color="purple" />
-        <StatCard icon={FiGrid} label="Total Categories" value={dashboardData.totals.categories} color="yellow" />
+        <StatCard icon={FiUsers} label="Total Students" value={dashboardData.totals?.students || 0} color="blue" />
+        <StatCard icon={FiBook} label="Total Courses" value={dashboardData.totals?.courses || 0} color="green" />
+        <StatCard icon={FiUserCheck} label="Total Mentors" value={dashboardData.totals?.mentors || 0} color="purple" />
+        <StatCard icon={FiGrid} label="Total Categories" value={dashboardData.totals?.categories || 0} color="yellow" />
       </div>
 
       {/* Today's Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <StatCard icon={FiPlusCircle} label="Today's Coupons" value={dashboardData.todayStats.todaysCoupons} color="orange" />
-        <StatCard icon={FiActivity} label="Redeemed Coupons" value={dashboardData.todayStats.redeemedCouponsToday} color="red" />
-        <StatCard icon={FiBarChart2} label="Revenue from Coupons" value={`₹${dashboardData.todayStats.revenueToday}`} color="emerald" />
+        <StatCard icon={FiPlusCircle} label="Today's Enrollments" value={dashboardData.todayStats?.todaysEnrollments || 0} color="orange" />
+        <StatCard icon={FiActivity} label="Completed Courses" value={dashboardData.todayStats?.completedCoursesToday || 0} color="red" />
+        <StatCard 
+          icon={FiBarChart2} 
+          label="Revenue from Courses" 
+          value={`₹${(dashboardData.todayStats?.revenueToday || 0).toLocaleString()}`} 
+          color="emerald" 
+        />
       </div>
 
-      {/* Active Users Summary */}
+      {/* Active Students Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <StatCard icon={FiClock} label="Daily Active Users" value={dashboardData.activeUsers.daily} color="blue" />
-        <StatCard icon={FiTrendingUp} label="Weekly Active Users" value={dashboardData.activeUsers.weekly} color="green" />
-        <StatCard icon={FiCalendar} label="Monthly Active Users" value={dashboardData.activeUsers.monthly} color="purple" />
+        <StatCard icon={FiClock} label="Daily Active Students" value={dashboardData.activeStudents?.daily || 0} color="blue" />
+        <StatCard icon={FiTrendingUp} label="Weekly Active Students" value={dashboardData.activeStudents?.weekly || 0} color="green" />
+        <StatCard icon={FiCalendar} label="Monthly Active Students" value={dashboardData.activeStudents?.monthly || 0} color="purple" />
       </div>
 
       {/* Charts */}
@@ -117,7 +206,7 @@ const Dashboard = () => {
           </div>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dashboardData.charts.earningsData[revenueFilter]}>
+              <AreaChart data={getMockChartData(revenueFilter)}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -130,21 +219,24 @@ const Dashboard = () => {
                   stroke="#3b82f6"
                   strokeWidth={2}
                   fill="url(#colorRevenue)"
-                  dot={false}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
                 />
+                <Tooltip />
+                <XAxis dataKey="name" />
+                <YAxis />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Redemption Trends Chart */}
+        {/* Enrollment Trends Chart */}
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-xl font-semibold">Coupon Redemption Trends</h3>
+            <h3 className="text-xl font-semibold">Course Enrollment Trends</h3>
             <select
               className="border border-gray-300 rounded px-2 py-1 text-sm"
-              value={redemptionFilter}
-              onChange={(e) => setRedemptionFilter(e.target.value)}
+              value={enrollmentFilter}
+              onChange={(e) => setEnrollmentFilter(e.target.value)}
             >
               <option value="today">Today</option>
               <option value="weekly">Weekly</option>
@@ -153,37 +245,40 @@ const Dashboard = () => {
           </div>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dashboardData.charts.redemptionData[redemptionFilter]}>
+              <AreaChart data={getMockChartData(enrollmentFilter)}>
                 <defs>
-                  <linearGradient id="colorRedeem" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorEnroll" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Area
                   type="monotone"
-                  dataKey="redeemed"
+                  dataKey="enrolled"
                   stroke="#10b981"
                   strokeWidth={2}
-                  fill="url(#colorRedeem)"
-                  dot={false}
+                  fill="url(#colorEnroll)"
+                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
                 />
+                <Tooltip />
+                <XAxis dataKey="name" />
+                <YAxis />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* New Restaurant Charts */}
+      {/* New Course Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        {/* Redemption at Restaurants Chart */}
+        {/* Enrollment by Course Chart */}
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-xl font-semibold">Redemption at Restaurants</h3>
+            <h3 className="text-xl font-semibold">Enrollment by Course</h3>
             <select
               className="border border-gray-300 rounded px-2 py-1 text-sm"
-              value={restaurantFilter}
-              onChange={(e) => setRestaurantFilter(e.target.value)}
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
             >
               <option value="today">Today</option>
               <option value="weekly">Weekly</option>
@@ -193,15 +288,15 @@ const Dashboard = () => {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={dashboardData.charts.restaurantRedemptionData[restaurantFilter]}
+                data={getMockCourseData(courseFilter)}
                 margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
               >
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Bar
-                  dataKey="redeemed"
-                  name="Coupons Redeemed"
+                  dataKey="enrolled"
+                  name="Students Enrolled"
                   fill="#8884d8"
                   radius={[4, 4, 0, 0]}
                 />
@@ -210,14 +305,14 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Top 10 Performing Restaurants Chart */}
+        {/* Top 10 Performing Courses Chart */}
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-xl font-semibold">Top Performing Restaurants</h3>
+            <h3 className="text-xl font-semibold">Top Performing Courses</h3>
             <select
               className="border border-gray-300 rounded px-2 py-1 text-sm"
-              value={topRestaurantsFilter}
-              onChange={(e) => setTopRestaurantsFilter(e.target.value)}
+              value={topCoursesFilter}
+              onChange={(e) => setTopCoursesFilter(e.target.value)}
             >
               <option value="today">Today</option>
               <option value="weekly">Weekly</option>
@@ -227,7 +322,7 @@ const Dashboard = () => {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={dashboardData.charts.topRestaurantsData[topRestaurantsFilter].slice(0, 10)}
+                data={getMockCourseData(topCoursesFilter)}
                 margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
               >
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -243,8 +338,8 @@ const Dashboard = () => {
                 />
                 <Bar
                   yAxisId="right"
-                  dataKey="coupons"
-                  name="Coupons Redeemed"
+                  dataKey="enrolled"
+                  name="Students Enrolled"
                   fill="#82ca9d"
                   radius={[4, 4, 0, 0]}
                 />
@@ -254,98 +349,130 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* User Activity Insights Table */}
+      {/* Student Activity Insights Table */}
       <div className="bg-white rounded-lg shadow-md p-4 mt-6">
-        <h3 className="text-2xl font-bold mb-4">User Activity Insights</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-2">User</th>
-                <th className="px-4 py-2">Last Login</th>
-                <th className="px-4 py-2">Account Created</th>
-                <th className="px-4 py-2">Offer Redeemed</th>
-                <th className="px-4 py-2">Review Given</th>
-                <th className="px-4 py-2">Steps</th>
-                <th className="px-4 py-2">Quiz</th>
-                <th className="px-4 py-2">News</th>
-                <th className="px-4 py-2">Facts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentUsers.map((user, idx) => (
-                <tr key={idx} className="border-t">
-                  <td className="px-4 py-2">{user.user}</td>
-                  <td className="px-4 py-2">{user.lastLogin}</td>
-                  <td className="px-4 py-2">{user.accountCreated}</td>
-                  <td className="px-4 py-2">{user.offerRedeemed}</td>
-                  <td className="px-4 py-2">{user.reviewGiven}</td>
-                  <td className="px-4 py-2">{user.activities.steps}</td>
-                  <td className="px-4 py-2">{user.activities.quiz}</td>
-                  <td className="px-4 py-2">{user.activities.news}</td>
-                  <td className="px-4 py-2">{user.activities.facts}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <h3 className="text-2xl font-bold mb-4">Student Activity Insights</h3>
+        {currentStudents.length > 0 ? (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm text-left">
+                <thead className="bg-gray-100 text-gray-700">
+                  <tr>
+                    <th className="px-4 py-2">Name</th>
+                    <th className="px-4 py-2">Email</th>
+                    <th className="px-4 py-2">Mobile</th>
+                    <th className="px-4 py-2">Account Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentStudents.map((student, idx) => (
+                    <tr key={student._id} className="border-t">
+                      <td className="px-4 py-2 font-medium">{student.name}</td>
+                      <td className="px-4 py-2">{student.email}</td>
+                      <td className="px-4 py-2">{student.mobile}</td>
+                      <td className="px-4 py-2">{formatDate(student.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {/* Pagination Controls */}
-        <div className="flex justify-end mt-4 space-x-2">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-blue-500 text-white" : "bg-gray-200"
-                }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-end mt-4 space-x-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  const pageNumber = i + 1;
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`px-3 py-1 rounded ${currentPage === pageNumber ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-4 text-gray-500">No student data available</div>
+        )}
       </div>
 
-      {/* Restaurant Insights Table */}
+      {/* Mentor Insights Table */}
       <div className="bg-white rounded-lg shadow-md p-4 mt-8">
-        <h3 className="text-2xl font-bold mb-4">Restaurant Insights</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-2">Restaurant</th>
-                <th className="px-4 py-2">Redemption</th>
-                <th className="px-4 py-2">Avg Rating</th>
-                <th className="px-4 py-2">Active Offer</th>
-                <th className="px-4 py-2">Joined Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentRestaurants.map((rest, idx) => (
-                <tr key={idx} className="border-t">
-                  <td className="px-4 py-2">{rest.restaurant}</td>
-                  <td className="px-4 py-2">{rest.redemption}</td>
-                  <td className="px-4 py-2">{rest.avgRating}</td>
-                  <td className="px-4 py-2">{rest.activeOffer}</td>
-                  <td className="px-4 py-2">{rest.joinedDate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <h3 className="text-2xl font-bold mb-4">Mentor Insights</h3>
+        {currentMentors.length > 0 ? (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm text-left">
+                <thead className="bg-gray-100 text-gray-700">
+                  <tr>
+                    <th className="px-4 py-2">Expertise</th>
+                    <th className="px-4 py-2">Joined Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentMentors.map((mentor, idx) => (
+                    <tr key={mentor._id} className="border-t">
+                      <td className="px-4 py-2 font-medium">{mentor.expertise}</td>
+                      <td className="px-4 py-2">{formatDate(mentor.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {/* Pagination Controls */}
-        <div className="flex justify-end mt-4 space-x-2">
-          {Array.from({ length: totalRestPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentRestPage(i + 1)}
-              className={`px-3 py-1 rounded ${currentRestPage === i + 1 ? "bg-blue-500 text-white" : "bg-gray-200"
-                }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
+            {/* Pagination Controls */}
+            {totalMentorPages > 1 && (
+              <div className="flex justify-end mt-4 space-x-2">
+                <button
+                  onClick={() => setCurrentMentorPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentMentorPage === 1}
+                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: Math.min(totalMentorPages, 5) }, (_, i) => {
+                  const pageNumber = i + 1;
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentMentorPage(pageNumber)}
+                      className={`px-3 py-1 rounded ${currentMentorPage === pageNumber ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setCurrentMentorPage(prev => Math.min(prev + 1, totalMentorPages))}
+                  disabled={currentMentorPage === totalMentorPages}
+                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-4 text-gray-500">No mentor data available</div>
+        )}
       </div>
 
       {/* Quick Actions */}
@@ -353,28 +480,28 @@ const Dashboard = () => {
         <h3 className="text-2xl font-bold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
-            onClick={() => navigate("/create-coupon")}
+            onClick={() => navigate("/create-course")}
             className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition"
           >
-            Create Coupon
+            Create Course
           </button>
           <button
-            onClick={() => navigate("/vendorlist")}
+            onClick={() => navigate("/mentor-list")}
             className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition"
           >
-            Manage Vendors
+            Manage Mentors
           </button>
           <button
-            onClick={() => navigate("/create-category")}
+            onClick={() => navigate("/course-modules")}
             className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition"
           >
-            Add Category
+            Course Module
           </button>
           <button
-            onClick={() => navigate("/coupons")}
+            onClick={() => navigate("/courselist")}
             className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition"
           >
-            View Coupons
+            View Courses
           </button>
         </div>
       </div>
@@ -406,12 +533,5 @@ const StatCard = ({ icon: Icon, label, value, color }) => {
     </div>
   );
 };
-
-// Quick Action Button Component
-const QuickActionButton = ({ label }) => (
-  <button className="bg-gray-100 hover:bg-gray-200 text-center py-4 rounded text-lg font-medium">
-    {label}
-  </button>
-);
 
 export default Dashboard;

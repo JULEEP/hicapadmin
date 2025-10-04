@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom"; // import karo
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = 'https://api.techsterker.com/api';
 
 const CreateEnrollment = () => {
   const [courses, setCourses] = useState([]);
@@ -18,6 +19,9 @@ const CreateEnrollment = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const navigate = useNavigate(); // initialize
+
 
   useEffect(() => {
     // Fetch courses from API
@@ -53,6 +57,8 @@ const CreateEnrollment = () => {
       const res = await axios.post(`${API_BASE}/create-enrollment`, formData);
       if (res.data.success) {
         setSuccessMessage('Enrollment created successfully!');
+        
+        // Reset form
         setFormData({
           batchNumber: '',
           batchName: '',
@@ -63,6 +69,9 @@ const CreateEnrollment = () => {
           category: '',
           status: 'Upcoming',
         });
+
+        // ✅ Navigate to /allenrollments after success
+        navigate("/allenrollments");
       } else {
         setError('Failed to create enrollment');
       }

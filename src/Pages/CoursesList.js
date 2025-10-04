@@ -3,7 +3,7 @@ import axios from 'axios';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { utils, writeFile } from 'xlsx';
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = 'https://api.techsterker.com/api';
 
 export default function AllCourses() {
   const [courses, setCourses] = useState([]);

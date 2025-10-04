@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = 'https://api.techsterker.com/api';
 
 const AddInterview = () => {
   const [enrollments, setEnrollments] = useState([]);
@@ -14,6 +15,9 @@ const AddInterview = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+
+  const navigate = useNavigate(); // initialize navigate
 
   // 🔁 Fetch all enrollments
   useEffect(() => {
@@ -59,11 +63,16 @@ const AddInterview = () => {
       const res = await axios.post(`${API_BASE}/add-interview`, payload);
       if (res.data.success) {
         setSuccessMessage(`Interview(s) created for ${res.data.data.length} user(s)`);
+
+        // Reset form
         setCompanyName('');
         setRole('');
         setExperience('');
         setLocation('');
         setSelectedEnrollment('');
+
+        // ✅ Navigate to /interviewlist
+        navigate('/interviewlist');
       } else {
         setError(res.data.message || 'Failed to create interviews');
       }
@@ -74,6 +83,7 @@ const AddInterview = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white border shadow-lg rounded-lg">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import discountLogo from '../Images/discount logo.png'; // Your local image
+import discountLogo from '../Images/logo.png'; // Your local image
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -16,7 +16,7 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/admin/register', {
+      const response = await fetch('https://api.techsterker.com/api/admin/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -45,7 +45,7 @@ const RegisterPage = () => {
         <div className="p-8 md:p-12 flex flex-col justify-center">
           <div className="text-center mb-6">
             <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-              TECHSTRKER
+              Techsterker
             </h1>
             <p className="text-gray-600 text-sm mt-1">Admin Register</p>
           </div>

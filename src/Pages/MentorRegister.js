@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom"; // import
 
-const API_BASE = 'http://localhost:5001';
+const API_BASE = 'https://api.techsterker.com';
 
 const RegisterMentor = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,7 @@ const RegisterMentor = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate(); // init
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -96,6 +98,10 @@ const RegisterMentor = () => {
           expertise: '',
           assignedCourses: '',
         });
+
+
+         // ✅ Navigate to mentorlist after success
+        navigate("/mentorlist");
       } else {
         setError(response.data.message || 'Something went wrong.');
       }

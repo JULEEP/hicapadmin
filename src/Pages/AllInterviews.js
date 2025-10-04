@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { utils, writeFile } from 'xlsx';
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = 'https://api.techsterker.com/api';
 
 const AllInterviews = () => {
   const [interviews, setInterviews] = useState([]);
